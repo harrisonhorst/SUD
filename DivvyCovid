@@ -1,0 +1,330 @@
+library(car)
+library(zoo)
+library(nlme)
+library(ggplot2)
+library(dplyr)
+df <- read.csv("Divvy_Trips_2020_Q1.csv")
+df_april <- read.csv("202004-divvy-tripdata.csv")
+df_may <- read.csv("202005-divvy-tripdata.csv")
+df_june <- read.csv("202006-divvy-tripdata.csv")
+df_q1_2019 <- read.csv("Divvy_Trips_2019_Q1.csv")
+df_q2_2019 <- read.csv("Divvy_Trips_2019_Q2.csv")
+df <- rbind(df, df_april, df_may, df_june)
+
+names(df_q2_2019) <- names(df_q1_2019)
+df_2019 <- rbind(df_q1_2019, df_q2_2019)
+df_2019$date <- as.Date(df_2019$start_time)
+tab_2019 <- table(cut(df_2019$date, 'day'))
+daily_2019 <- data.frame(Date=format(as.Date(names(tab_2019))),
+                        Frequency=as.vector(tab_2019))
+daily_2019$rollmean <- rollmean(daily_2019$Frequency, 7, na.pad = T)
+daily_2019$time <- seq(181)
+plot(daily_2019$time, daily_2019$rollmean,
+     ylab="Number of Divvy Trips",
+     ylim=c(0, 21500),
+     xlab="Date",
+     type="l",
+     col="green",
+     xaxt='n')
+lines(daily_2019$rollmean, col= "black", lwd = 3)
+lines(daily_2019$Frequency)
+### Plot with ggplot
+daily_2019$datefor <- as.Date(daily_2019$Date)
+ggplot(daily_2019, aes(datefor, Frequency)) +
+               geom_point() +
+        geom_line(aes(y=rollmean), color="red") +
+        scale_x_date(date_breaks="months", date_labels="%b %e") 
+
+df$date <- as.Date(df$started_at)
+tab <- table(cut(df$date, 'day'))
+daily <- data.frame(Date=format(as.Date(names(tab))),
+           Frequency=as.vector(tab))
+daily$time <- seq(182) #add sequence for the whole data set
+daily$level <- 0 # Add pre-intervention
+daily$level[77:182] <- 1 #addvpost-intervention
+daily$trend[77:182] <- seq(77:182)
+daily$trend[1:76] <- 0
+plot(daily$time, daily$Frequency,
+     ylab="Number of Divvy Trips",
+     ylim=c(0, 21500),
+     xlab="Date",
+     type="l",
+     col="red",
+     xaxt='n')
+## Add x-axis labels
+axis(1, at=1:182, labels=daily$Date)
+points(daily$time, daily$Frequency,
+       col='red',
+       pch=20)
+abline(v=76.5, lty=2)
+text(30.5, 12000, "School Closure Order", col="blue")
+arrows(60, 12000, 76.5, 12000, col='blue')
+title(main="Divvy Trips January-June 2020")
+daily$rollmean <- rollmean(daily$Frequency, 7, na.pad = T)
+lines(daily$rollmean, col= "black", lwd = 3)
+### Plot of the rolling mean
+plot(daily$time, daily$rollmean,
+     ylab="Frequency",
+     ylim=c(0, 17500),
+     xlab="Date",
+     type="l",
+     col="red",
+     xaxt='n')
+## Add x-axis labels
+axis(1, at=1:182, labels=daily$Date)
+
+
+model_ols <- lm(Frequency ~ time + level + trend, data=daily) #Prelim OLS regression
+summary(model_ols)
+confint(model_ols)
+### Check for autocorrelation
+dwt(model_ols, max.lag=12, alternative='two.sided')
+plot(daily$time, residuals(model_ols), type = 'o', pch = 16, xlab='Time', ylab='OLS residuals')
+
+par(mfrow=c(2,1))
+acf(residuals(model_ols))
+acf(residuals(model_ols), type ='partial')
+
+model_p10 <- gls(Frequency ~ time + level + trend, data=daily, 
+                 correlation=corARMA(p=10, form = ~time),
+                 method='ML')
+summary(model_p10)
+
+model_p11 <- update(model_p10, correlation=corARMA(p=11, form = ~time))
+anova(model_p10, model_p11)
+        
+### Final Plot
+
+plot(daily$time, daily$Frequency,
+     ylab="Number of Divvy Trips",
+     ylim=c(0, 20500),
+     xlab="Date",
+     pch=20,
+     col="red",
+     xaxt='n')
+axis(1, at=1:182, labels=daily$Date)
+abline(v=76.5, lty='dotted')
+## Plot the first line segment
+lines(daily$time[1:76], fitted(model_p10)[1:76], col = "red", lwd=2)
+### Plot the second line segment
+lines(daily$time[77:182], fitted(model_p10)[77:182], col = "red", lwd=2)
+segments(1,
+         model_p10$coef[1]+model_p10$coef[2],
+         182,
+         model_p10$coef[1]+model_p10$coef[2]*182,
+         lty=2,
+         lwd=2,
+         col='red')
+
+
+### Oakland 
+
+oak_jan2020 <- read.csv("202001-baywheels-tripdata.csv")
+oak_feb2020 <- read.csv("202002-baywheels-tripdata.csv")
+oak_mar2020 <- read.csv("202003-baywheels-tripdata.csv")
+oak_apr2020 <- read.csv("202004-baywheels-tripdata.csv")
+oak_may2020 <- read.csv("202005-baywheels-tripdata.csv")     
+oak_jun2020 <- read.csv("202006-baywheels-tripdata.csv")
+
+oak_df1 <- bind_rows(oak_jan2020, oak_feb2020, oak_mar2020)
+
+oak_df1$date <- as.Date(oak_df1$start_time)
+tab_oakdf1 <- table(cut(oak_df1$date, 'day'))
+oak_daily_2020 <- data.frame(Date=format(as.Date(names(tab_oakdf1))),
+                         Frequency=as.vector(tab_oakdf1))
+
+oak_df2 <- bind_rows(oak_apr2020, oak_may2020, oak_jun2020)
+oak_df2$date <- as.Date(oak_df2$started_at)
+tab_oakdf2 <- table(cut(oak_df2$date, 'day'))
+oak_daily_Q2_2020 <- data.frame(Date=format(as.Date(names(tab_oakdf2))),
+                                Frequency=as.vector(tab_oakdf2))
+oak_2020 <- bind_rows(oak_daily_2020, oak_daily_Q2_2020)
+### Need to remove line 92 as it cotained partial April 1 rides in the March
+### file
+oak_2020 <- oak_2020[-92,]
+oak_2020$rollmean <- rollmean(oak_2020$Frequency, 7, na.pad = T)
+oak_2020$time <- seq(182)
+plot(oak_2020$time, oak_2020$rollmean,
+     ylab="Number of Bay Wheels Trips",
+     ylim=c(0, 16000),
+     xlab="Date",
+     type="l",
+     col="green",
+     xaxt='n')
+lines(oak_2020$rollmean)
+
+### 2020 Divvy vs San Fran
+plot(daily$time, daily$rollmean,
+     ylab="Frequency",
+     ylim=c(0, 17500),
+     xlab="Date",
+     type="l",
+     col="red",
+     xaxt='n')
+axis(1, at=1:182, labels=daily$Date)
+abline(v=76.5, lty='dotted')
+lines(oak_2020$rollmean, col = "blue")
+legend(80, 16000, legend=c("Chicago", "Bay Area"), 
+       col=c("red","blue"), lty=1:1, cex=0.8)
+title(main="Seven Day Rolling Average of Bike-Share Usage, Jan.-Jun. 2020, \nChicago & Bay Area", 
+      sub = "Vertical line indicates stay-at-home orders")
+
+### Get Bay Area 2019 data
+oak_jan2019 <- read.csv("201901-fordgobike-tripdata.csv")
+oak_feb2019 <- read.csv("201902-fordgobike-tripdata.csv")
+oak_mar2019 <- read.csv("201903-fordgobike-tripdata.csv")
+oak_apr2019 <- read.csv("201904-fordgobike-tripdata.csv")
+oak_may2019 <- read.csv("201905-baywheels-tripdata.csv")     
+oak_jun2019 <- read.csv("201906-baywheels-tripdata.csv")
+oak_jun2019 <- oak_jun2019[-15] # Delete "rental access method" variable
+#### station id were formated as int in the june data. Change to character
+oak_jun2019$start_station_id <- as.character(oak_jun2019$start_station_id)
+oak_jun2019$end_station_id <- as.character(oak_jun2019$end_station_id)
+oak_2019 <- bind_rows(oak_jan2019, oak_feb2019, oak_mar2019, oak_apr2019, oak_may2019, oak_jun2019)
+oak_2019$date <- as.Date(oak_2019$start_time)
+tab_oak_2019 <- table(cut(oak_2019$date, 'day'))
+oak_daily_2019 <- data.frame(Date=format(as.Date(names(tab_oak_2019))),
+                                Frequency=as.vector(tab_oak_2019))
+oak_daily_2019$rollmean <- rollmean(oak_daily_2019$Frequency, 7, na.pad = T)
+oak_daily_2019$time <- seq(181)
+
+plot(oak_daily_2019$time, oak_daily_2019$rollmean,
+     ylab="Number of Bay Wheels Trips",
+     ylim=c(0, 16000),
+     xlab="Date",
+     type="l",
+     col="green",
+     xaxt='n')
+lines(oak_daily_2019$rollmean)
+# plot with ggplot
+oak_daily_2019$datefor <- as.Date(oak_daily_2019$Date)
+oak_2020$datefor <- as.Date(oak_2020$Date)
+### Had to add an extra day to oak_daily_2019 
+### to account for leap year 2020 so I could make the comparative plot
+### I added 1 Jul 2019 with a copy of 20 June's data
+oak_daily_2019 <- oak_daily_2019 %>% add_row(Date = "2019-07-01", Frequency = 3877, time = 182, datefor = as.Date("2019-07-01"))
+ggplot(oak_2020, aes(datefor, Frequency)) +
+        geom_line(aes(y=rollmean, color = "blue")) +
+        scale_x_date(date_breaks="months", date_labels="%b %e") +
+        geom_line(aes(y=oak_daily_2019$rollmean, color = "red"), show.legend = TRUE) +
+  ggtitle("Rolling 7 Day Average - Bay Wheels Usage, 2019 vs. 2020") +
+  xlab("Date") +
+  scale_color_manual(values=c("blue", "red"), name = "Year", labels = c("2020", "2019"))
+
+ggplot(oak_daily_2019, aes(datefor, Frequency)) +
+        geom_line(aes(y=rollmean), color="red") +
+        scale_x_date(date_breaks="months", date_labels="%b %e") 
+
+
+## Separate Oakland
+
+oaksta <- read.csv("Oakland_Bike_Share_Stations.csv")
+
+oak_only_2019 <- semi_join(oak_2019, oaksta, by = c("start_station_name" = "OfficialName"))
+tab_oak_only_2019 <- table(cut(oak_only_2019$date, 'day'))
+oak_only_daily_2019 <- data.frame(Date=format(as.Date(names(tab_oak_only_2019))),
+                             Frequency=as.vector(tab_oak_only_2019))
+oak_only_daily_2019$rollmean <- rollmean(oak_only_daily_2019$Frequency, 7, na.pad = T)
+oak_only_daily_2019$time <- seq(181)
+oak_only_daily_2019$datefor <- as.Date(oak_only_daily_2019$Date)
+ggplot(oak_only_daily_2019, aes(datefor, Frequency)) +
+  geom_line(aes(y=rollmean), color="red") +
+  scale_x_date(date_breaks="months", date_labels="%b %e") +
+  ggtitle("Bay Wheels Usage in Oakland, 2019") +
+  xlab("Date")
+
+### Isolate Oakland Data for 2020
+
+oak_only_q1_2020 <- semi_join(oak_df1, oaksta, by = c("start_station_name" = "OfficialName"))
+oak_only_q2_2020 <- semi_join(oak_df2, oaksta, by = c("start_station_name" = "OfficialName"))
+oak_only_q1_2020$date <- as.Date(oak_only_q1_2020$start_time)
+
+tab_oak_only_q1_2020 <- table(cut(oak_only_q1_2020$date, 'day'))
+oak_only_q1_daily_2020 <- data.frame(Date=format(as.Date(names(tab_oak_only_q1_2020))),
+                             Frequency=as.vector(tab_oak_only_q1_2020))
+
+
+# oak_df2$date <- as.Date(oak_df2$started_at)
+tab_oak_only_q2_2020 <- table(cut(oak_only_q2_2020$date, 'day'))
+oak_only_q2_daily_2020 <- data.frame(Date=format(as.Date(names(tab_oak_only_q2_2020))),
+                                Frequency=as.vector(tab_oak_only_q2_2020))
+oak_only_2020 <- bind_rows(oak_only_q1_daily_2020, oak_only_q2_daily_2020)
+oak_only_2020$rollmean <- rollmean(oak_only_2020$Frequency, 7, na.pad = T)
+oak_only_2020$time <- seq(182)
+oak_only_2020$datefor <- as.Date(oak_only_2020$Date)
+
+ggplot(oak_only_2020, aes(datefor, Frequency)) +
+  geom_line(aes(y=rollmean), color="red") +
+  scale_x_date(date_breaks="months", date_labels="%b %e") +
+  ggtitle("Bay Wheels Usage in Oakland, 2020") +
+  xlab("Date")
+
+##### Time series analysis for Oakland Slow Streets intervention
+oak_only_2020$level <- 0 # Add pre-intervention
+oak_only_2020$level[102:182] <- 1 #addvpost-intervention
+oak_only_2020$trend[102:182] <- seq(77:182)
+oak_only_2020$trend[1:101] <- 0
+
+model_ols_oak <- lm(Frequency ~ time + level + trend, data=oak_only_2020) #Prelim OLS regression
+summary(model_ols_oak)
+confint(model_ols_oak)
+
+model_oak_p10 <- gls(Frequency ~ time + level + trend, data=oak_only_2020, 
+                 correlation=corARMA(p=10, form = ~time),
+                 method='ML')
+
+### Final Plot Oakland ITS
+
+plot(oak_only_2020$time, oak_only_2020$Frequency,
+     ylab="Number of Bay Wheels Trips",
+     xlab=NA,
+     ylim=c(0, 700),
+     pch=20,
+     col="pink",
+     xaxt='n')
+axis(1, at=1:182, labels=oak_only_2020$Date)
+abline(v=101.5, lty='dotted')
+## Plot the first line segment
+lines(daily$time[1:101], fitted(model_oak_p10)[1:101], col = "red", lwd=2)
+### Plot the second line segment
+lines(daily$time[102:182], fitted(model_oak_p10)[102:182], col = "red", lwd=2)
+segments(1,
+         model_oak_p10$coef[1]+model_oak_p10$coef[2],
+         182,
+         model_oak_p10$coef[1]+model_oak_p10$coef[2]*182,
+         lty=2,
+         lwd=2,
+         col='red')
+text(0, 205, labels = "Predicted values", pos = 4, cex = 1, col = "dodgerblue3")
+text(150, 105, labels = "Counterfactual", pos = 4, cex = 1, col = "darkorange2")
+
+
+title(main="Interrupted Time Series Analysis of Bay Wheels Usage \nBefore & After Slow Streets Intervention", 
+      sub = "On 11 April 2020 the City of Oakland Established a Slow Streets Program \nthat designated 74 miles of roadways for bikes and pedestrians")
+
+### Oakland using a time series beginning on March 20.
+oak_2020_lockdown <- oak_only_2020[81:182,]
+
+model_ols_oak_lockdown <- lm(Frequency ~ time + level + trend, data=oak_2020_lockdown) #Prelim OLS regression
+summary(model_ols_oak_lockdown)
+confint(model_ols_oak_lockdown)
+
+model_oak_lockdown_p10 <- gls(Frequency ~ time + level + trend, data=oak_2020_lockdown, 
+                     correlation=corARMA(p=10, form = ~time),
+                     method='ML')
+model_oak_lockdown_p11 <- update(model_oak_lockdown_p10, correlation=corARMA(p=11, form = ~time))
+
+plot(oak_2020_lockdown$time, oak_2020_lockdown$Frequency,
+     ylab="Number of Bay Wheels Trips",
+     xlab=NA,
+     ylim=c(0, 400),
+     pch=20,
+     col="pink",
+     xaxt='n')
+axis(1, at=81:182, labels=oak_2020_lockdown$datefor)
+abline(v=101.5, lty='dotted')
+
+#### Split the oakland stations into ones that are within 500 meters of
+#### a slow street. Networked buffers of 500m were created in QGIS on the street
+#### grid of oakland for all stations. Stations whose buffers intersected with
+#### open streets were selected and saved as "oak_slow_st_buffer.csv"
