@@ -1,0 +1,91 @@
+library(car)
+library(zoo)
+library(nlme)
+library(ggplot2)
+library(dplyr)
+supermarkets <- read.csv("supermarkets.csv")
+
+Aldi1_ols <- lm(Aldi1 ~ Time + Level + Trend, data=supermarkets) #Aldi1 OLS regression
+Aldi2_ols <- lm(Aldi2 ~ Time + Level + Trend, data=supermarkets)
+Aldi3_ols <- lm(Aldi3 ~ Time + Level + Trend, data=supermarkets)
+Aldi4_ols <- lm(Aldi4 ~ Time + Level + Trend, data=supermarkets)
+Mariano1_ols <- lm(Mariano1 ~ Time + Level + Trend, data=supermarkets)
+Mariano2_ols <- lm(Mariano2 ~ Time + Level + Trend, data=supermarkets)
+Mariano3_ols <- lm(Mariano3 ~ Time + Level + Trend, data=supermarkets)
+Mariano4_ols <- lm(Mariano4 ~ Time + Level + Trend, data=supermarkets)
+Mariano5_ols <- lm(Mariano5 ~ Time + Level + Trend, data=supermarkets)
+Mariano6_ols <- lm(Mariano6 ~ Time + Level + Trend, data=supermarkets)
+Mariano7_ols <- lm(Mariano7 ~ Time + Level + Trend, data=supermarkets)
+Mariano8_ols <- lm(Mariano8 ~ Time + Level + Trend, data=supermarkets)
+Mariano9_ols <- lm(Mariano9 ~ Time + Level + Trend, data=supermarkets)
+Mariano10_ols <- lm(Mariano10 ~ Time + Level + Trend, data=supermarkets)
+TraderJoe1_ols <- lm(TraderJoe1 ~ Time + Level + Trend, data=supermarkets)
+TraderJoe2_ols <- lm(TraderJoe2 ~ Time + Level + Trend, data=supermarkets)
+TraderJoe3_ols <- lm(TraderJoe3 ~ Time + Level + Trend, data=supermarkets)
+WholeFood1_ols <- lm(WholeFood1 ~ Time + Level + Trend, data=supermarkets)
+WholeFood2_ols <- lm(WholeFood2 ~ Time + Level + Trend, data=supermarkets)
+WholeFood3_ols <- lm(WholeFood3 ~ Time + Level + Trend, data=supermarkets)
+WholeFood4_ols <- lm(WholeFood4 ~ Time + Level + Trend, data=supermarkets)
+WholeFood5_ols <- lm(WholeFood5 ~ Time + Level + Trend, data=supermarkets)
+WholeFood6_ols <- lm(WholeFood6 ~ Time + Level + Trend, data=supermarkets)
+WholeFood7_ols <- lm(WholeFood7 ~ Time + Level + Trend, data=supermarkets)
+summary(Aldi1_ols)
+confint(Aldi1_ols)
+
+plot(supermarkets$Time, residuals(WholeFood3_ols), type='o', xlab='Time', ylab='Residuals')
+abline(v=32, lty=2)
+plot(supermarkets$Time, supermarkets$WholeFood3, type='o', xlab='Time', ylab='Residuals')
+View(WholeFood3_ols$coefficients[3])
+View(WholeFood3_ols)     
+summary(WholeFood3_ols)
+
+supermarkets$AldiAverage <- rowMeans(supermarkets[,4:7], na.rm=TRUE)
+supermarkets$MarianoAverage <- rowMeans(supermarkets[,8:17], na.rm=TRUE)
+supermarkets$TraderJoeAverage <- rowMeans(supermarkets[,18:20], na.rm=TRUE)
+supermarkets$WholeFoodAverage <- rowMeans(supermarkets[,21:27], na.rm=TRUE)
+View(supermarkets)
+AldiAverage_ols <- lm(AldiAverage ~ Time + Level + Trend, data=supermarkets)
+MarianoAverage_ols <- lm(MarianoAverage ~ Time + Level + Trend, data=supermarkets)
+WholeFoodAverage_ols <- lm(WholeFoodAverage ~ Time + Level + Trend, data=supermarkets)
+TraderJoeAverage_ols <- lm(TraderJoeAverage ~ Time + Level + Trend, data=supermarkets)
+summary(WholeFoodAverage_ols)
+summary(AldiAverage_ols)
+summary(Aldi1_ols)
+ols_summaries <- data.frame(
+  Aldi1 = c(Aldi1_ols$coefficients[1:4]),
+  Aldi2 = c(Aldi2_ols$coefficients[1:4]),
+  Aldi3 = c(Aldi3_ols$coefficients[1:4]),
+  Aldi4 = c(Aldi4_ols$coefficients[1:4]),
+  Mariano1 = c(Mariano1_ols$coefficients[1:4]),
+  Mariano2 = c(Mariano2_ols$coefficients[1:4]),
+  Mariano3 = c(Mariano3_ols$coefficients[1:4]),
+  Mariano4 = c(Mariano4_ols$coefficients[1:4]),
+  Mariano5 = c(Mariano5_ols$coefficients[1:4]),
+  Mariano6 = c(Mariano6_ols$coefficients[1:4]),
+  Mariano7 = c(Mariano7_ols$coefficients[1:4]),
+  Mariano8 = c(Mariano8_ols$coefficients[1:4]),
+  Mariano9 = c(Mariano9_ols$coefficients[1:4]),
+  Mariano10 = c(Mariano10_ols$coefficients[1:4]),
+  TraderJoe1 = c(TraderJoe1_ols$coefficients[1:4]),
+  TraderJoe2 = c(TraderJoe2_ols$coefficients[1:4]),
+  TraderJoe3 = c(TraderJoe3_ols$coefficients[1:4]),
+  WholeFood1 = c(WholeFood1_ols$coefficients[1:4]),
+  WholeFood2 = c(WholeFood2_ols$coefficients[1:4]),
+  WholeFood3 = c(WholeFood3_ols$coefficients[1:4]),
+  WholeFood4 = c(WholeFood4_ols$coefficients[1:4]),
+  WholeFood5 = c(WholeFood5_ols$coefficients[1:4]),
+  WholeFood6 = c(WholeFood6_ols$coefficients[1:4]),
+  WholeFood7 = c(WholeFood7_ols$coefficients[1:4]),
+  AldiAverage = c(AldiAverage_ols$coefficients[1:4]),
+  MarianoAverage = c(MarianoAverage_ols$coefficients[1:4]),
+  TraderJoeAverage = c(TraderJoeAverage_ols$coefficients[1:4]),
+  WholeFoodAverage = c(WholeFoodAverage_ols$coefficients[1:4])
+)
+print(ols_summaries)
+View(ols_summaries)
+write.csv(ols_summaries,"ols_summaries.csv")
+summary(WholeFoodAverage_ols)
+plot(supermarkets$Time, residuals(WholeFoodAverage_ols), type='o', xlab='Time', ylab='Residuals')
+abline(v=32, lty=2)
+plot(supermarkets$Time, residuals(AldiAverage_ols), type='o', xlab='Time', ylab='Residuals')
+abline(v=32, lty=2)
