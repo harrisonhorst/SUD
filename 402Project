@@ -1,0 +1,177 @@
+---
+title: "Sustainability District Project"
+author: "Harrison Horst"
+date: "3/18/2021"
+output:
+  rmdformats::downcute:
+    self-contained: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidycensus)
+library(tidyverse)
+library(sf)
+library(mapview)
+hburg <- get_acs(state = "VA", county = "Harrisonburg", geography = "block group",
+                variables = "B19013_001", geometry = TRUE)
+hburg_race <- get_acs(state = "VA", county = "Harrisonburg", geography = "block group",
+                     variables = "B02001_002", geometry = TRUE, summary_var = "B02001_001" )
+```
+
+The site for this proposed sustainability district is located on the northern end of a downtown area in Harrisonburg, VA. Harrisonburg is a mid-sized town with about 50,000 residents located in the Shenandoah Valley region of northwest Virginia - a two hours' drive from Washington, D.C. The city's economy is bolstered by poultry exports and serves as a regional operational hub for Cargill. Its demographics skew young, reflecting the presence of two universities within the city and another just outside.
+
+As my home for a number of years, I am interested in Harrisonburg's development policies, which I am highly familiar with thanks to time I have spent with several of the organizations listed below (Harrisonburg Downtown Renaissance, Vine & Fig, and Eastern Mennonite University). 
+
+![City Hall in Downtown Harrisonburg](ProjectImages/cityhall.png) 
+
+## Site Context
+
+The site at the center of the proposed sustainability district is located at 450 N. Mason St at the northern end of the Harrisonburg Downtown District. The primary existing structures at the site are a discount department store flanked by a strip mall and a large parking lot which is greatly underused.
+
+![Roses Discount Department Store](ProjectImages/roses.png)
+
+Surrounding the site are three district areas with distinct feels that intersect at the site: a downtown district, an industrial area, and a residential area called the Northeast Neighborhood. For my purposes, the downtown district will be marked in blue, the industrial area marked in yellow, and the Northeast Neighborhood marked in pink. 
+
+![District Area Map. Roses, marked by a blue pin, is located at the confluence of the three district areas.](ProjectImages/districtmap.png)
+
+Understanding the background and influence of each district area on the sustainability site is important context for developing the district in a sensitive and appropriate manner.
+
+### Area 1: The Downtown District
+
+In the past 20 years, Downtown Harrisonburg has undergone a drastic revitalization process. By 2003, city officials had become alarmed about the degree to which investment was leaving the downtown area in favor of the sprawling shopping malls developing in the southeast corner of the city. In reaction, a quasi-governmental agency called the Harrisonburg Downtown Renaissance (HDR) was formed in 2003 to promote and facilitate local investment into the downtown area. 
+
+![](ProjectImages/downtown.png)
+
+Assisted by a growth spurt in James Madison University's student body, the downtown district slowly turned development trends around, resulting in the reception of the Great American Main Street award in 2014 and a designation as Virginia's First Culinary District in 2015. HDR, which is itself a Main Street organization, encouraged cohesiveness among planning projects and advanced Complete Streets principles to promote walking and biking. In 2018, HDR joined forces with the city government to pursue a comprehensive downtown rebranding process, further establishing a coheisve feel to the downtwon district (see logo/slogan below). Today, HDR encourages economic vitality by hosting downtown events, like Restaurant Month, the Friendly City fortune, and the Skeleton Festival. 
+
+![](ProjectImages/branding.png)
+
+### Area 2: The Old Industrial Area
+
+A railway runs through the north side of the city, giving way to a number of industrial sites that run up against the edge of downtown. The bulk of these are feed mill factories, seed distribution plants, and grain elevators. The area includes the presence of George's poultry plant and a Cargill distribution center, just one of Cargill's many plants around the city, both of which contribute to making Harrisonburg one of the "poultry capitals" of Virginia. 
+
+![](ProjectImages/cargill.png)
+
+This industrial area contains some of the oldest sites in Harrisonburg, some of which have already succumbed to the allure of redevelopment as the downtown has expanded to meet it. A seed processing plant building (shown above) has recently been redeveloped to a high-end restaurant on the ground level and an apartment complex upstairs. Down the street, an employee-owned restaurant cooperative called The Little Grill opened next to an auto repair shop, soon becoming one of the most popular eateries in the city. Nevertheless, the area is heavily trafficked by trucks and afflicted by a regular and unpleasant aroma, making it an unattractive area for pedestrians.
+
+![The Little Grill restaurant was one of the first to make use of mixed-use principles in the primarily industrial area.](ProjectImages/littlegrill.png)
+
+### Area 3: The Northeast Neighborhood
+
+The Northeast Neighorhood is one of the oldest residential areas in the city and lies on a stretch of land formerly known as "Newtown." Prior to its annexation by Harrisonburg city around 1900, Newtown was a town of its own right settled originally by freed slaves during Reconstruction. There are a few notable historical sites in the area, including a few historically black churches and cemeteries.
+
+![](ProjectImages/church.png)
+
+Unfortunately, much of the area's history was bulldozed during the urban renewal blitz in the 1950s and 60s that caught up many cities, including Harrisonburg, in its headwinds. Beginning in 1954, the Federal Housing Authority made funds available to city governments looking to clear and redevelop "blighted areas," an ambiguous term whose definition is highly contested. In Harrisonburg, planners chose Newtown as their focus for two urban renewal projects, Project R4 and the smaller Project R16.
+
+![As many as 200 people were removed during Project R4, and many businesses owned by African-Americans had to close their doors.](ProjectImages/urbanrenewal.png)
+
+![The largest portion of Project R4 (lower left) became the Roses Department Store and parking lot that is the focus of this project.](ProjectImages/projectR4.png)
+
+Now, the Northeast Neighborhood now is a diverse community with one of the lowest median incomes in the city and an array of commmunity service organizations. The most prevalent of these is the Northeast Neighborhood Association (NENA), which considers itself to be the voice of the neighborhood and is highly active in local politics and advocacy. NENA has done a great deal to bring awareness to the injustices suffered as a result of Project R4, which have been mostly forgotten by the citizenry of Harrisonburg living outside the Northeast Neighborhood.
+
+Nevertheless, the scars from the Newtown urban renewal have not fully healed for many residents of the Northeast Neighborhood. Redevelopment of the area, particularly the site of the old Project R4, is a sensitive topic for many members of the community. Median income in the neighorhood continues to be depressed, and crime levels are higher than other parts of the city. And yet, this, too, is adjacent to the northern end of the downtown district.
+
+```{r, echo=FALSE}
+hburg_tracts <- c("51660000101","51660000402")
+hburg_bgs <- hburg %>% filter(str_detect(GEOID, paste(hburg_tracts, collapse = "|")))
+mapview(hburg_bgs, zcol = "estimate", legend = TRUE, layer.name ="Median Household Income")
+
+```
+
+As shown on the interactive map above, income levels drop off fairly significantly in the areas around the focus site, especially in the Northeast Neighborhood (GEOID 516600001012). 
+
+``` {r, echo=FALSE}
+hburg_race$per_white <- hburg_race$estimate/hburg_race$summary_est
+hburg_bgs_race <- hburg_race %>% filter(str_detect(GEOID,paste(hburg_tracts, collapse = "|")))
+mapview(hburg_bgs_race, zcol = "per_white", legend = TRUE, layer.name ="Percent White")
+
+```
+
+Two other organizations worth mentioning here are Vine & Fig and Our Community Place (OCP). The Our Community Place (OCP) property is adjacent to the Roses site, and Vine & Fig is about a quarter of a mile down the street. Vine & Fig and NCP house people experiencing homelessness while pursuing alternative, sustainable ways of living and often work together to advocate on sustainability and justice. 
+
+![The back of Vine & Fig's White House, one of their living centers.](ProjectImages/vineandfig.jpg)
+
+### Planning and Zoning
+
+The city's zoning map reflects the three district areas identified in the anlaysis (shown below). The green (residential) stretch to the right side of the outlined area is the Northeast neighborhood, while the the brown areas represent industrial zoning and the red areas are classified downtown business district. 
+
+![Harirsonburg City Zoning Map](ProjectImages/zoningmap.png)
+
+In this map, Roses Discount Department Store is represented by the star. What this map makes clear is that the site is the northernmost property zoned as part of the downtown business district and is intended to be part of the downtown streetscape. As a result, the site has a lot of opportunity for redevelopment, especially as developers and entrepreneurs run out of "low-hanging fruit" in the downtown area.
+
+What have city planning officials imagined for the future of the area? In 2018, the Harrisonburg City Council and Planning Department published a new comprehensive city plan, in which they laid out a planning roadmap for the coming decade. This differs from the zoning map in that it is intended to anticipate imminent changes to the contours of the city.
+
+![Harrisonburg Comprehensive Plan](ProjectImages/planningmap.png)![](ProjectImages/landuse.png)
+
+In the comprehensive plan, nearly the entirety of the new sustainability district is designated as mixed-use. The few exceptions are the residential areas at the edges of the district (including the Northeast Neighborhood) and the Rockingham County Treasurer's office (the purple block in the center of the district). This is excellent news for the prospects of implementing a cohesive sustainability district, considering mixed-use development in the area is already expected and should be welcomed by local officials.
+
+### Recent Developments
+
+The feel of the area surrounding Roses Department Store has already begun to change in recent years. Some of the industrial buildings have been repurposed as restaurants or apartments. New developments continue to rise in the north end of the downtown district, the most recent being a classy breakfast diner on the intersection of Gay & N. Liberty, a cider press on N. Liberty, and a coffeeshop on N. Liberty & Main. In addition, many of the new developments are mixed-use; for example, the diner includes a collaborative working space on the second floor.
+
+![Recent developments are marked by green stars. The Northend Greenway bike trail is represented by the red dashed line.](ProjectImages/newdevelopments.png)
+
+Propelled by an bicycling advocacy team connected to Vine & Fig, this area also saw the recent completion of an off-street bicycle trail called the Northend Greenway, which connects the northern end of downtown to Eastern Mennonite University and the Park View area to the northwest. The Northend Greenway is one of Harrisonburg's first greenways and includes a restoration plan for the adjacent Blacks Run stream.
+
+In 2019, Harrisonburg also adopted a new residential zoning designation. Under "R-8" zoning, minimum plot sizes are vastly decreased and occupancy levels are raised to promote more affordable housing options in high-density parts of the city. As the city looks to develop more mixed-use plots along the sustainability district corridor, the ability to build homes on smaller residential plots could prove crucial to creating a highly liveable part of town.
+
+## Challenges
+
+The prospect of redeveloping and greening the Roses site and surrounding area comes with plenty of challenges.
+
+1. The foremost challenge undoubtedly lies in ensuring that the redevelopment process and outcome are equitable and respectful of the painful legacy left by project R4. One reason the lot likely has NOT yet been developed is the difficulty in tackling this challenge. Involving community groups in the redevelopment process is an obvious place to start. The Northeast Neighborhood Association, Vine & Fig, and Our Community Place are all highly active community organizations with stable leadership and connected but distinct missions, and would bring invaluable input to a redevelopment project in the area.
+
+2. A related challenge is ensuring that the needs of low-income residents in the Northeast Neighborhood are met satisfactorily. During a 2018 market consultation, it came to the attention of the Harrisonburg Downtown Renaissance that residents living near to downtown were running out of places to shop for basic goods and necessities. In what may be the be the beginning echoes of a gentrification process, it was made clear that discount stores were being replaced by high-end eateries and boutique stores which catered more to the likes of weekend tourists and well-to-do college students. Gentrification is especially undesirable in the Northeast Neighborhood considering the historical legacy of the area. Finding a way to continue meeting the needs of local residents while using the Roses lot more efficiently and avoiding gentrification will require consistent tracking of housing prices and goods prices in the district.
+
+3. Another issue involves the aesthetic connectivity between the sustainability district and the rest of downtown. HDR has already put in the word to develop a comprehensive branding and design package for downtown, but signage and branding is rarely used in the northern end due to the lack of pedestrians, giving it a fairly ambiguous feeling. When walking around the site currently, the influence of the different district areas gives the pedestrian a feeling of disorientation. Much can be done to fix this from a design standpoint.
+
+4. A related challenge is the implementation of successful bike/walk infrastructure in a high-traffic area. One reason the area has remained fairly un-pedestrian friendly is the volume of trucks that regularly traverse the main road (N. Liberty) running through the district. A prevalence of parking lots makes the area feel especially car-friendly, and vacant parking lots feel especially unwelcome for foot travelers. 
+
+5. It will also be important for the city to promote the growth of mixed-use plots and the implementation of complete streets architecture without damaging industry relationships. George's, Cargill, and the other industrial users represent important stakeholders of the Harrisonburg economy. How can the sustainability district be implemented in such a way as to maximize the sustainabiilty potential of the area without damaging the efficiency of industrial operations along N. Liberty street?
+
+6. An environmental challenge is to maintain the health of the local stream, Blacks Run, that runs through the middle of the sustainability district. Blacks Run is already heavily polluted, but future activities should emphasize environmental protection to reduce further impact. In addition, the stream should be viewed as an aesthetic asset for pedestrians in the area, if stream restoration work can be successfully funded in the coming years. 
+
+## Recommendations
+
+What are the next steps that can be taken in implementing a sustainability district at 450 N. Mason St and the surrounding North Liberty street area? Here are a few ideas.
+
+1. First, prior to any redevelopment, a procedure or governance structure must be adopted that adequately and actively involves members of community advocacy groups. As mentioned above, the Northeast Neighborhood Association, Vine & Fig, and Our Community Place are all highly active community organizations with stable leadership and connected but distinct missions that would bring great diversity of expertise to such a project. Such a procedure could also deploy linkages with other major organizations, such as HDR, the Sustainable Business Coalition, the peace & justice department at EMU, and the advocacy & facilitation department at JMU. All of these groups have deep experience in providing expert facilitation and could prove invaluable for moving the sustainability district project forward. Regardless of the other players, such a redevelopment project must include active assent and input from Northeast Neighobrhood residents to prevent another urban renewal fiasco. Given the context, such a procedure is not an impossibility.
+
+2. Second, regarding the Project R4 legacy, distinct efforts should be made to recognize, protect, and restore the lost history of the buried Newtown. Such efforts could include educational practices within the redevelopment process and present in the final development product in the form of memorials, plaques, building/location names, or even a museum or historical center dedicated to Project R4. Such materials could also be added to the existing historical center located nearby in the Northeast Neighborhood.
+
+3. To make sure the needs of the community are not compromised, ample research should go into the functionality of the site at Roses and its connected stores. There may be services that are considered essential and frequented regularly by the low-income residents living nearby; it may also be the case that the stores at the site are largely unused. This research can be used to inform the process by ensuring that services considered to be essential can be prioritized during redevelopment, and the storefront can be simultaneously diversified.
+
+4. Assuming support from the community and working group, the most sensible path forward is to redevelop the plot at Roses into many smaller lots that can be used for various mixed-use development opportunities, while reserving a smaller area on the north side of the plot for some much-needed green space, in the form of a park or a garden (Vine & Fig and OCP would both be able to provide energy and expertise in this regard). There is also enough space on this lot to consider a short pedestrian mall or walkway that would connect the bus stop at the south side of the plot to the community centers on the north side. Furthermore, thanks to the recent R-8 zoning expansion, there may be room for residential development as well. Beyond these loose ideas, it would be up to developers and community members to determine an agreeable direction in conjunction.
+
+5. In order for a sustainability district to succeed here, it must be aggressively re-branded and redesigned with the aesthetics of the downtown district in mind. Two possible monikers include "Downtown North" and "Northend District," borrowing from the language of the popular Northend Greenway trail. Likewise, when considering the construction of such mixed-use buildings as described above, desing principles from the downtown district must be carried over to provide a feeling of cohesivity for pedestrians. To assist, the iconography of the downtown that is already used extensively in other parts of the city must be deliberately infused into streetscape re-designs on N. Mason St. and N. Liberty St. (see below).
+
+6. There is ample room for improvement along many of the street corridors in the Sustainability District, but the two most essential are Mason St. and Liberty St., which intersect at the northwest corner of the Roses parking lot. The intersection itself is a nightmare for pedestrians, with busy traffic and no crosswalks across multiple lanes, surrounded by parking lots on three sides. As a part of downtown, the streets in this area should feel pleasant rather than dangerous to walk on, even adding appropriate signage and speed controls to that single intersection would make a huge difference. As mentioned, there is almost no greenery in the entire district, and adding designated biophilic regions could bring a host of benefits to the area. More research should be done on the functionality of the existing parking spaces, but it is likely that they are greatly underused. Principles of tactical urbanism (impermanent structures) can be used to facilitate this overall process. 
+
+## Evaluation
+
+I have developed an evaluation metric with five criteria for the ongoing evaluation of this redevelopment project. The five criteria are: community involvement, livability, adherence to the comprehensive plan, area traffic, and the presence of green initiatives.
+
+1. As one of the most vital components of this project, it is essential that community involvement is regularly evaluated. Questions like "What role do community members play" and "Were community members aware of changes to the project and to the community?" are important in this assessment. The ladder of involvement is another tool to measure the degree to which community members were involved.
+
+2. Likewise, to forestall the creep of gentrification, it is important that questions of livability are evaluated regularly in the form of housing prices, occupancy rates, and the cost of living in the area.
+
+3. The third metric is adherence to the comprehensive plan (and other city planning documents). This specific metric is meant to ensure that the efforts put into producing a relatively recent citywide comprehensive plan are appropriately used in the development of a major project. In addition, comprehensive plan adherence gives a platform for planning experts hired by the city to weigh into the project and nudge the project towards citywide values and goals. 
+
+4. As one of the main challenges to the aspiring sustainability district, area traffic should be evaluated to document changes in speed and use patterns over time. Pedestrian and bicycle activity can also be monitored to detect use changes in the area. 
+
+5. Finally, this project should be evaluated based on its inclusion of green principles. What sustainability indicators are present? What was the environment footprint of the project? And how has green infrastructure been used in the construction design of buildings and streets?
+
+![](ProjectImages/evaluation.png)
+
+## Conclusion 
+
+The area I've chosen for my sustainability district represents great potential. Lying at the heart of three separate district areas with distinct aesthetic feels and historical legacies, the plot of land currently occupied by Roses Discount Department Store could in the future be an eclectic and innovative mixed-use space that re-imagines the procedure for redevelopment and restores dignity to the site of old Newtown. Such ideas are possible. The fact that it was developed poorly once does not mean we should be afraid to consider developing it better this time around. 
+
+![](ProjectImages/districtmap.png)
+
+![](ProjectImages/branding.png)
